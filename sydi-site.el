@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 572
+;;     Update #: 579
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -124,7 +124,7 @@ each of regexp, it'll not export it if any regexp matches."
   :group 'sydi-site
   :type 'regexp)
 
-(defcustom sydi-include-pattern nil
+(defcustom sydi-include-pattern ""
   "Include files pattern to export."
   :group 'sydi-site
   :type 'regexp)
@@ -176,7 +176,7 @@ each of regexp, it'll not export it if any regexp matches."
      (setq org-html-link-home sydi-site-url)
      (setq org-export-with-section-numbers nil)
      (setq org-html-link-use-abs-url t)
-     (setq org-html-preamble (lambda () "<g:plusone></g:plusone>"))
+     (setq org-html-preamble (lambda (plist) "<g:plusone></g:plusone>"))
      (setq org-html-footnotes-section "<div id=\"footnotes\">
 <h2 class=\"footnotes\">%s: </h2>
 <span id=\"text-footnotes\">
@@ -400,16 +400,16 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
         `(("sydi"
            :components ("sydi-pages" "sydi-static"))
           ("sydi-static"
-           :base-directory "~/sydi.org/org/"
+           :base-directory ,sydi-base-directory
            :base-extension "xml\\|css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf\\|html\\|div\\|pl\\|template\\|txt\\|woff\\|eot\\|sh"
-           :publishing-directory "~/sydi.org/html"
+           :publishing-directory ,sydi-publish-directory
            :recursive t
            :publishing-function org-publish-attachment)
           ("sydi-rss"
               :base-directory ,sydi-base-directory
               :base-extension "org"
               :rss-image-url "http://lumiere.ens.fr/~guerry/images/faces/15.png"
-              :html-link-home "http://sydi.org/"
+              :html-link-home ,sydi-site-url
               :rss-extension "xml"
               :publishing-directory ,sydi-publish-directory
               :publishing-function (org-rss-publish-to-rss)
@@ -487,7 +487,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
 
 (defun sydi-generate-atom ()
   (interactive)
-  (generate-atom "~/sydi.org/org" "~/sydi.org/org/atom.xml"))
+  (generate-atom sydi-base-directory (concat sydi-base-directory "atom.xml")))
 
 ;;;###autoload
 (defun generate-atom (root-dir atom-file)
@@ -502,7 +502,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
            (atom-filename atom-file)
            (visiting (find-buffer-visiting atom-filename))
            (atom-buffer (or visiting (find-file atom-filename)))
-           (title "MiScratch")
+           (title sydi-site-name)
            (subtitle "About Linux, Distributed System, Data Base, High Performance System")
            (self-link "http://sydi.org/atom.xml")
            (link "http://sydi.org/")
@@ -771,7 +771,7 @@ All meta are sorted by it's date property."
 
 (defun sydi-generate-sitemap ()
   (interactive)
-  (sydi-generate-sitemap-ex "sitemap.xml" "/home/ryan/sydi.org/org/" "http://sydi.org/"))
+  (sydi-generate-sitemap-ex "sitemap.xml" sydi-base-directory "http://sydi.org/"))
 
 (provide 'sydi-site)
 

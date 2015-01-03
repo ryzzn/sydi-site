@@ -23,12 +23,17 @@
 # Code:
 
 # where html files put
-PUBLISH_HTTP_DIR=~/sydi.org/html
+PUBLISH_HTTP_DIR=~/sydi.org/publish
 USE_TIDY="TRUE"
+
+REMOTE_USER=ryan;
+REMOTE_HOST=sydi.org;
+REMOTE_FOLDER=/srv/http/www/;
+DESTNATE=${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_FOLDER};
 
 function do_tidy {
     if [ "$USE_TIDY" ]; then
-        find $PUBLISH_HTTP_DIR -type f -name '*.html' -or -name '*.xml' -exec tidy -m {} \;
+        find $PUBLISH_HTTP_DIR -type f \( -name '*.html' -or -name '*.xml' \) -exec tidy -m {} \;
     fi
 }
 
@@ -50,8 +55,11 @@ case "$1" in
     tidy)
         do_tidy
         ;;
+    rsync)
+        rsync -avz --progress --delete ${PUBLISH_HTTP_DIR}/ ${DESTNATE}
+        ;;
     "")
-        emacs --batch  -L htmlize -l sydi-site.el -f sydi-publish
+        emacs -Q --batch -L htmlize -l sydi-site.el -l custom.el -f sydi-publish
         do_tidy
         ;;
     *)
