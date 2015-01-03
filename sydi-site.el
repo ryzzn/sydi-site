@@ -1,18 +1,18 @@
-;;; init-org-html.el ---
+;;; sydi-site.el --- website generator base on Emacs and org mode
 ;;
-;; Filename: init-org-html.el
+;; Filename: sydi-site.el
 ;; Description:
 ;; Author: Shi Yudi
-;; Maintainer:
+;; Maintainer: Shi Yudi
 ;; Created: 2014-07-18T18:51:07+0800
-;; Version:
+;; Version: 0.1
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 432
-;; URL:
-;; Doc URL:
-;; Keywords:
+;;     Update #: 451
+;; URL: https://github.com/ryzzn/sydi-site
+;; Doc URL: https://github.com/ryzzn/sydi-site
+;; Keywords: sydi, Emacs, org mode, website
 ;; Compatibility:
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -24,6 +24,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Change Log:
+;; 3-Jan-2015    Shi Yudi
+;;    init version
 ;;
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -68,18 +70,18 @@
 
 </script>")
 
-(defvar sydi/comment-box-p t "Should add commnet box for this page")
-(defvar sydi/homepage-p nil "Indicate whether the page is home page")
-(defvar sydi/single-p t "Indicate whether a single post page or not")
+(defvar sydi/comment-box-p t "Should add commnet box for this page.")
+(defvar sydi/homepage-p nil "Indicate whether the page is home page.")
+(defvar sydi/single-p t "Indicate whether a single post page or not.")
 
 (defvar sydi/atom-exclude-file-list '("douban\\.org$" "^personal" "index\\.org$")
-  "exclude files exporting to atom file")
-(defvar sydi/atom-max-export-files-num 10 "max files to export")
-(defvar sydi/exclude-pattern ".*my-wife.*\.org" "exclude files pattern to export")
-(defvar sydi/include-pattern nil "include files pattern to export")
-(defvar sydi/auto-sitemap t "generate sitemap")
-(defvar sydi/recent-file "dynamic/recent-post.div" "recent post file")
-(defvar sydi/recent-count 20 "how many posts should display in recent tab")
+  "Exclude files exporting to atom file.")
+(defvar sydi/atom-max-export-files-num 10 "Max files to export.")
+(defvar sydi/exclude-pattern ".*my-wife.*\.org" "Exclude files pattern to export.")
+(defvar sydi/include-pattern nil "Include files pattern to export.")
+(defvar sydi/auto-sitemap t "Whether Generate sitemap.")
+(defvar sydi/recent-file "dynamic/recent-post.div" "Which file to store recent posts.")
+(defvar sydi/recent-count 20 "How many posts should display in recent tab.")
 
 (require 'ox)
 
@@ -689,5 +691,5 @@ All meta are sorted by it's date property."
   (interactive)
   (sydi/generate-sitemap-ex "sitemap.xml" "/home/ryan/sydi.org/org/" "http://sydi.org/"))
 
-(provide 'init-org-html)
-;;; init-org-html.el ends here
+(provide 'sydi-site)
+;;; sydi-site.el ends here
