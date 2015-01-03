@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 579
+;;     Update #: 597
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -119,7 +119,7 @@ each of regexp, it'll not export it if any regexp matches."
   :group 'sydi-site
   :type 'integer)
 
-(defcustom sydi-exclude-pattern ".*my-wife.*\.org"
+(defcustom sydi-exclude-pattern ".*my-wife.*\.org\\|sitemap.org"
   "Regexp pattern that org files wound be ignored to export."
   :group 'sydi-site
   :type 'regexp)
@@ -133,6 +133,16 @@ each of regexp, it'll not export it if any regexp matches."
   "Whether Generate sitemap."
   :group 'sydi-site
   :type 'boolean)
+
+(defcustom sydi-atom-file "dynamic/atom.xml"
+  "Which file to store atom xml."
+  :group 'sydi-site
+  :type 'string)
+
+(defcustom sydi-sitemap-file "dynamic/sitemap.org"
+  "Sitemap file path."
+  :group 'sydi-site
+  :type 'string)
 
 (defcustom sydi-recent-file "dynamic/recent-post.div"
   "Which file to store recent posts."
@@ -405,18 +415,6 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
            :publishing-directory ,sydi-publish-directory
            :recursive t
            :publishing-function org-publish-attachment)
-          ("sydi-rss"
-              :base-directory ,sydi-base-directory
-              :base-extension "org"
-              :rss-image-url "http://lumiere.ens.fr/~guerry/images/faces/15.png"
-              :html-link-home ,sydi-site-url
-              :rss-extension "xml"
-              :publishing-directory ,sydi-publish-directory
-              :publishing-function (org-rss-publish-to-rss)
-              :section-numbers nil
-              :exclude ".*"            ;; To exclude all files...
-              :include ("index.org")   ;; ... except index.org.
-              :table-of-contents nil)
           ("sydi-pages"
            :base-directory ,sydi-base-directory
            :base-extension "org"
@@ -428,7 +426,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
            :makeindex nil
            :auto-sitemap ,sydi-auto-sitemap
            :sitemap-ignore-case t
-           :sitemap-filename "sitemap.org"
+           :sitemap-filename ,sydi-sitemap-file
            :sitemap-function sydi-publish-org-sitemap
            :htmlized-source t
            :with-toc nil
@@ -440,12 +438,12 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
            :style "
 <link rel=\"stylesheet\" href=\"/assets/css/style.css\" />
 <link href=\"/assets/images/logo.png\" rel=\"icon\" type=\"image/x-icon\" />
-<link href=\"/atom.xml\" type=\"application/atom+xml\" rel=\"alternate\" title=\"sydi.org atom\" />
+<link href=\"/dynamic/atom.xml\" type=\"application/atom+xml\" rel=\"alternate\" title=\"sydi.org atom\" />
 "
-           :js-style "<script type=\"text/javascript\" src=\"/assets/js/jquery.min.js\"></script>
-<script type=\"text/javascript\" src=\"/assets/js/site.js\"></script>
+           :js-style "<script type=\"text/javascript\" src=\"/assets/javascripts/jquery.min.js\"></script>
+<script type=\"text/javascript\" src=\"/assets/javascripts/site.js\"></script>
 "
-           :publishing-function (org-html-publish-to-html org-org-publish-to-org)
+           :publishing-function (org-html-publish-to-html)
            :body-only t
            :completion-function (sydi-sync-server)))))
 
@@ -455,6 +453,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
   (let ((org-format-latex-signal-error nil)
         (org-startup-folded nil)
         (org-export-date-timestamp-format "%Y-%m-%d")
+        (make-backup-files nil)
         (proj (or proj "sydi")))
     (set-org-publish-project-alist)
     (message "Emacs %s" emacs-version)
@@ -487,7 +486,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
 
 (defun sydi-generate-atom ()
   (interactive)
-  (generate-atom sydi-base-directory (concat sydi-base-directory "atom.xml")))
+  (generate-atom sydi-base-directory (concat sydi-base-directory sydi-atom-file)))
 
 ;;;###autoload
 (defun generate-atom (root-dir atom-file)

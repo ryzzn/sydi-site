@@ -23,7 +23,9 @@
 # Code:
 
 # where html files put
-PUBLISH_HTTP_DIR=~/sydi.org/publish
+BASE_DIR=~/sydi.org
+ORIGIN_HTTP_DIR=$BASE_DIR/origin
+PUBLISH_HTTP_DIR=$BASE_DIR/publish
 USE_TIDY="TRUE"
 
 REMOTE_USER=ryan;
@@ -41,9 +43,23 @@ function usage {
     echo "Usage: ./run.sh [init|test]"
 }
 
+function init {
+    mkdir -p $ORIGIN_HTTP_DIR/{posts,dynamic,components,assets}
+
+    echo '(setq org-publish-timestamp-directory "'$BASE_DIR'/.org-timestamps/")' >>custom.el
+    echo '(setq sydi-base-directory "'$ORIGIN_HTTP_DIR'/")' >>custom.el
+    echo '(setq sydi-publish-directory "'$PUBLISH_HTTP_DIR'/")' >>custom.el
+    echo '(setq sydi-site-url "http://YOUR_SITE_URL")' >>custom.el
+    echo '(setq sydi-site-name "YOUR_SITE_NAME")' >>custom.el
+
+    echo "Write your javascript in file: $ORIGIN_HTTP_DIR/assets/javascripts/site.js"
+    echo "Write your css in file: $ORIGIN_HTTP_DIR/assets/css/style.css"
+    echo "Write your articles in under: $ORIGIN_HTTP_DIR/posts/"
+}
+
 case "$1" in
     init)
-        echo init
+        init
         ;;
     test)
         (
