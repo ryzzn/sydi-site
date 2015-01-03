@@ -1,0 +1,3 @@
+[submodule "htmlize"]
+	path = htmlize
+	url = https://github.com/emacsmirror/htmlize.git
