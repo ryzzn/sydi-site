@@ -7,19 +7,23 @@ Homepage: http://sydi.org
 
 Requires: Emacs 24+
 
+**WARNING**: The repository hasn't developed done, there are many hard
+  coded variable in some places. I'll move them and make it a
+  convenient usage very soon.
+
 Initialize
 ==========
 
 First, you should clone out this repository.
 
-  git clone https://github.com/ryzzn/sydi-site.git
+    git clone https://github.com/ryzzn/sydi-site.git
 
 Then, custom variables to fit your need, which now is located at
 header lines of sydi-site.el file.
 
 Last step, initialize website
 
-  ./run.sh init
+    ./run.sh init
 
 From now on, you can enjoy your org file editing, blablabla...
 
@@ -30,8 +34,8 @@ Once you think it's time to see what the site is like after previous
 blablabla, i.e. editing, then you can type these two command in your
 shell terminal.
 
-  ./run.sh
-  ./run.sh test
+    ./run.sh
+    ./run.sh test
 
 The first command without any arguments means generate org file to
 HTML file, also some other miscellaneous will publish to the HTML
