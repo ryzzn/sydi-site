@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 597
+;;     Update #: 598
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -770,7 +770,7 @@ All meta are sorted by it's date property."
 
 (defun sydi-generate-sitemap ()
   (interactive)
-  (sydi-generate-sitemap-ex "sitemap.xml" sydi-base-directory "http://sydi.org/"))
+  (sydi-generate-sitemap-ex "dynamic/sitemap.xml" sydi-base-directory "http://sydi.org/"))
 
 (provide 'sydi-site)
 
