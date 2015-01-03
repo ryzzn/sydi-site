@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 451
+;;     Update #: 572
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -50,16 +50,47 @@
 
 (require 'cl)
 
-(defvar sydi/base-directory "~/sydi.org/org/"
-  "base org files directory")
-(defvar sydi/base-code-directory "~/sydi.org/html/code/")
-;; (defvar sydi/base-color-themes-directory "~/sydi.org/worg/color-themes/")
-(defvar sydi/base-images-directory "~/sydi.org/html/assets/images/")
-(defvar sydi/publish-directory "~/sydi.org/html/")
-(defvar sydi/site-url "http://sydi.org/")
-(defvar sydi/google-id "112098239943590093765")
-(defvar sydi/site-name "MiScratch")
-(defvar sydi/google-tracker "<script>
+(defgroup sydi-site nil
+  "sydi html generator"
+  :group 'Applications
+  :prefix "sydi-")
+
+(defcustom sydi-base-directory "~/sydi.org/org/"
+  "Base org files directory."
+  :group 'sydi-site
+  :type 'directory)
+
+(defcustom sydi-publish-directory "~/sydi.org/html/"
+  "Directory where to export org file to."
+  :group 'sydi-site
+  :type 'directory)
+
+(defcustom sydi-base-code-directory "~/sydi.org/html/code/"
+  "Directory where to put code files."
+  :group 'sydi-site
+  :type 'directory)
+
+(defcustom sydi-base-images-directory "~/sydi.org/html/assets/images/"
+  "Directory where to put images."
+  :group 'sydi-site
+  :type 'directory)
+
+(defcustom sydi-site-url "http://sydi.org/"
+  "Web site home URL."
+  :group 'sydi-site
+  :type 'string)
+
+(defcustom sydi-google-id "112098239943590093765"
+  "Google id that will generate a link to your gplus page."
+  :group 'sydi-site
+  :type 'string)
+
+(defcustom sydi-site-name "MiScratch"
+  "Your site name."
+  :group 'sydi-site
+  :type 'string)
+
+(defcustom sydi-google-tracker "<script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -68,26 +99,70 @@
   ga('create', 'UA-34738984-1', 'auto');
   ga('send', 'pageview');
 
-</script>")
+</script>"
+  "Google tracker script, change it's id to your google tracker
+id that you can tracker your visitors behaviors in Google
+Analytics."
+  :group 'sydi-site
+  :type 'string)
 
-(defvar sydi/comment-box-p t "Should add commnet box for this page.")
-(defvar sydi/homepage-p nil "Indicate whether the page is home page.")
-(defvar sydi/single-p t "Indicate whether a single post page or not.")
+(defcustom sydi-atom-exclude-file-list '("douban\\.org$" "^personal" "index\\.org$")
+  "Exclude files which wouldn't export to atom file.
+It's a list of regexp, `sydi-site' will check each file name for
+each of regexp, it'll not export it if any regexp matches."
+  :group 'sydi-site
+  :type '(set regexp))
 
-(defvar sydi/atom-exclude-file-list '("douban\\.org$" "^personal" "index\\.org$")
-  "Exclude files exporting to atom file.")
-(defvar sydi/atom-max-export-files-num 10 "Max files to export.")
-(defvar sydi/exclude-pattern ".*my-wife.*\.org" "Exclude files pattern to export.")
-(defvar sydi/include-pattern nil "Include files pattern to export.")
-(defvar sydi/auto-sitemap t "Whether Generate sitemap.")
-(defvar sydi/recent-file "dynamic/recent-post.div" "Which file to store recent posts.")
-(defvar sydi/recent-count 20 "How many posts should display in recent tab.")
+(defcustom sydi-atom-max-export-files-num 10
+  "Max files to be export to atom file at most.  Don't set too big,
+10 maybe a appropriate value, 20 is the top."
+  :group 'sydi-site
+  :type 'integer)
+
+(defcustom sydi-exclude-pattern ".*my-wife.*\.org"
+  "Regexp pattern that org files wound be ignored to export."
+  :group 'sydi-site
+  :type 'regexp)
+
+(defcustom sydi-include-pattern nil
+  "Include files pattern to export."
+  :group 'sydi-site
+  :type 'regexp)
+
+(defcustom sydi-auto-sitemap t
+  "Whether Generate sitemap."
+  :group 'sydi-site
+  :type 'boolean)
+
+(defcustom sydi-recent-file "dynamic/recent-post.div"
+  "Which file to store recent posts."
+  :group 'sydi-site
+  :type 'string)
+
+(defcustom sydi-recent-count 20
+  "How many posts should display in recent tab."
+  :group 'sydi-site
+  :type 'integer)
+
+(defcustom sydi-sidebar-file "components/sidebar.div.part"
+  "Where the sidebar component file path is."
+  :group 'sydi-site
+  :type 'string)
+
+(defcustom sydi-footer-file "components/footer.div.part"
+  "Where the footer component file path is."
+  :group 'sydi-site
+  :type 'string)
 
 (require 'ox)
 
-(add-to-list 'org-export-options-alist '(:comment-box nil "comment-box" t sydi/comment-box-p))
-(add-to-list 'org-export-options-alist '(:homepage nil "homepage" nil sydi/homepage-p))
-(add-to-list 'org-export-options-alist '(:single nil "single" t sydi/single-p))
+(defvar sydi-comment-box-p t "Should add commnet box for this page.")
+(defvar sydi-homepage-p nil "Indicate whether the page is home page.")
+(defvar sydi-single-p t "Indicate whether a single post page or not.")
+
+(add-to-list 'org-export-options-alist '(:comment-box nil "comment-box" t sydi-comment-box-p))
+(add-to-list 'org-export-options-alist '(:homepage nil "homepage" nil sydi-homepage-p))
+(add-to-list 'org-export-options-alist '(:single nil "single" t sydi-single-p))
 (add-to-list 'org-export-options-alist '(:js-style nil nil nil))
 
 (eval-after-load 'ox-html
@@ -98,7 +173,7 @@
      (setq org-export-allow-bind-keywords t)
      (setq org-html-head-include-scripts nil) ; 不加载默认js
      (setq org-html-head-include-default-style nil) ; 不加载默认css
-     (setq org-html-link-home sydi/site-url)
+     (setq org-html-link-home sydi-site-url)
      (setq org-export-with-section-numbers nil)
      (setq org-html-link-use-abs-url t)
      (setq org-html-preamble (lambda () "<g:plusone></g:plusone>"))
@@ -110,24 +185,25 @@
 </div>")))
 
 ;;;###autoload
-(defun sydi/sync-server ()
-  (sydi/write-recent-file)
+(defun sydi-sync-server ()
+  (sydi-write-recent-file)
   (message "sync file to server")
   ;; (async-shell-command "update_sydi_org.sh")
   (message "sync file to server complete")
   )
 
-(setq org-export-filter-final-output-functions '(sydi/final-export))
+(setq org-export-filter-final-output-functions '(sydi-final-export))
 
-(defun sydi/final-export (contents backend info)
+(defun sydi-final-export (contents backend info)
   "Filter to indent the HTML and convert HTML entities."
   (if (eq backend 'html)
-      (sydi/final-html-export-filter contents info)))
+      (sydi-final-html-export-filter contents info)))
 
 ;;;###autoload
 ;;; The hook is run after org-html export html done and
 ;;; still stay on the output html file.
-(defun sydi/final-html-export-filter (contents info)
+(defun sydi-final-html-export-filter (contents info)
+  "The sydi final export filter."
   (defun get-string-from-file (filePath)
     "Return filePath's file content."
     (with-temp-buffer
@@ -135,7 +211,7 @@
       (buffer-string)))
   (let ((content-no-script)
         (script "")
-        (google-tracker sydi/google-tracker))
+        (google-tracker sydi-google-tracker))
     ;; extract javascript
     (if (not (string-match "<script[^>]*>\\(.\\|\n\\)*</script>" contents))
         (setq content-no-script contents)
@@ -157,7 +233,12 @@
                          (fboundp 'coding-system-get)
                          (coding-system-get org-html-coding-system 'mime-charset)))
            (sidebar-html (if (plist-get info :base-directory)
-                           (get-string-from-file (concat (plist-get info :base-directory) "dynamic/sidebar.div"))
+                             (get-string-from-file
+                              (concat (plist-get info :base-directory) sydi-sidebar-file))
+                           ""))
+           (footer-html (if (plist-get info :base-directory)
+                            (get-string-from-file
+                             (concat (plist-get info :base-directory) sydi-footer-file))
                           ""))
            (comment-box (if (plist-get info :comment-box)
                             "<div class=\"comments ds-thread\"></div>" ""))
@@ -206,7 +287,7 @@
   </div>
 </div>
 <!-- ENS WRAPPER -->
-<div id=\"footer\"></div>
+<div id=\"footer\">%s</div>
 %s
 %s
 </body></html>"
@@ -226,15 +307,16 @@
                       header
                       content-no-script
                       comment-box
+                      footer-html
                       script
                       js-style
-                      ;; sydi/google-id
+                      ;; sydi-google-id
                       ;; author
                       ;; date
-                      ;; sydi/site-name
+                      ;; sydi-site-name
                       )))))
 
-(defun sydi/publish-org-sitemap (project &optional sitemap-filename)
+(defun sydi-publish-org-sitemap (project &optional sitemap-filename)
   "Create a sitemap of pages in set defined by PROJECT.
 Optionally set the filename of the sitemap with SITEMAP-FILENAME.
 Default for SITEMAP-FILENAME is 'sitemap.org'."
@@ -260,7 +342,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
       (while (setq file (pop files))
         (let ((fn (file-name-nondirectory file))
               (link (file-relative-name file dir))
-              (date (format-time-string "%Y-%m-%d" (sydi/get-org-file-date file)))
+              (date (format-time-string "%Y-%m-%d" (sydi-get-org-file-date file)))
               (oldlocal localdir))
           (when sitemap-sans-extension
             (setq link (file-name-sans-extension link)))
@@ -324,30 +406,30 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
            :recursive t
            :publishing-function org-publish-attachment)
           ("sydi-rss"
-              :base-directory ,sydi/base-directory
+              :base-directory ,sydi-base-directory
               :base-extension "org"
               :rss-image-url "http://lumiere.ens.fr/~guerry/images/faces/15.png"
               :html-link-home "http://sydi.org/"
               :rss-extension "xml"
-              :publishing-directory ,sydi/publish-directory
+              :publishing-directory ,sydi-publish-directory
               :publishing-function (org-rss-publish-to-rss)
               :section-numbers nil
               :exclude ".*"            ;; To exclude all files...
               :include ("index.org")   ;; ... except index.org.
               :table-of-contents nil)
           ("sydi-pages"
-           :base-directory ,sydi/base-directory
+           :base-directory ,sydi-base-directory
            :base-extension "org"
-           :exclude ,sydi/exclude-pattern
-           :include ,sydi/include-pattern
-           :publishing-directory ,sydi/publish-directory
+           :exclude ,sydi-exclude-pattern
+           :include ,sydi-include-pattern
+           :publishing-directory ,sydi-publish-directory
            :html-extension "html"
            :recursive t
            :makeindex nil
-           :auto-sitemap ,sydi/auto-sitemap
+           :auto-sitemap ,sydi-auto-sitemap
            :sitemap-ignore-case t
            :sitemap-filename "sitemap.org"
-           :sitemap-function sydi/publish-org-sitemap
+           :sitemap-function sydi-publish-org-sitemap
            :htmlized-source t
            :with-toc nil
            :auto-preamble t
@@ -365,9 +447,9 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
 "
            :publishing-function (org-html-publish-to-html org-org-publish-to-org)
            :body-only t
-           :completion-function (sydi/sync-server)))))
+           :completion-function (sydi-sync-server)))))
 
-(defun sydi/publish (&optional proj)
+(defun sydi-publish (&optional proj)
   "Publish Worg in htmlized pages."
   (interactive)
   (let ((org-format-latex-signal-error nil)
@@ -377,16 +459,16 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
     (set-org-publish-project-alist)
     (message "Emacs %s" emacs-version)
     (org-version)
-    (if sydi/auto-sitemap (sydi/generate-sitemap))
+    (if sydi-auto-sitemap (sydi-generate-sitemap))
     (org-publish-project proj)))
 
-(defun sydi/publish-current ()
+(defun sydi-publish-current ()
   "Publish current org file"
   (interactive)
-  (let ((sydi/exclude-pattern ".*")
-        (sydi/include-pattern (list (file-relative-name buffer-file-name sydi/base-directory)))
-        (sydi/auto-sitemap nil))
-    (sydi/publish "sydi-pages")))
+  (let ((sydi-exclude-pattern ".*")
+        (sydi-include-pattern (list (file-relative-name buffer-file-name sydi-base-directory)))
+        (sydi-auto-sitemap nil))
+    (sydi-publish "sydi-pages")))
 
 ;; external browser should be chromium
 (setq browse-url-generic-program
@@ -403,7 +485,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
                   (w3m-browse-url url t))))))
     ad-do-it))
 
-(defun sydi/generate-atom ()
+(defun sydi-generate-atom ()
   (interactive)
   (generate-atom "~/sydi.org/org" "~/sydi.org/org/atom.xml"))
 
@@ -416,7 +498,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
              (format-time-string "%z"))))
   (save-excursion
     (let* ((org-export-allow-BIND t)
-           (org-files (subseq (sydi/get-sorted-org-files root-dir) 0 sydi/atom-max-export-files-num))
+           (org-files (subseq (sydi-get-sorted-org-files root-dir) 0 sydi-atom-max-export-files-num))
            (atom-filename atom-file)
            (visiting (find-buffer-visiting atom-filename))
            (atom-buffer (or visiting (find-file atom-filename)))
@@ -445,7 +527,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
   <generator uri=\"%s\">ryan's orgmode generator</generator>"
                  title subtitle self-link link
                  (web-time-string)
-                 id author email sydi/site-url))
+                 id author email sydi-site-url))
         (dolist (file org-files)
           (message file)
           (let ((org-file-buffer (find-file file)))
@@ -465,8 +547,8 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
                                )))))
                    (url (concat
                          (replace-regexp-in-string
-                          (file-truename sydi/base-directory)
-                          sydi/site-url
+                          (file-truename sydi-base-directory)
+                          sydi-site-url
                           (file-name-sans-extension (buffer-file-name)))
                          ".html"))
                    (entry (format
@@ -489,7 +571,7 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
         (save-buffer)
         (kill-buffer)))))
 
-(defun sydi/get-org-file-date (file &optional other)
+(defun sydi-get-org-file-date (file &optional other)
   "Return org file date in #+date header line using `current-time' format.
 
 If #+date keyword is not set and `other' equals to \"modify\", return the file system's modification time instead, if `other' equals to \"change\" return the file system's last change time instead, if `other' equals to \"access\" return the file systems's access time instead, otherwise return 0 as 1970-01-01 00:00:00, the minimal time.
@@ -509,7 +591,7 @@ If #+date keyword is not set and `other' equals to \"modify\", return the file s
                   ((equal other "change") (nth 6 (file-attributes file)))
                   (t '(0 0)))))))))
 
-(defun sydi/get-org-file-date-str (file)
+(defun sydi-get-org-file-date-str (file)
   "Return org file date"
   (let ((visiting (find-buffer-visiting file)))
     (save-excursion
@@ -517,40 +599,40 @@ If #+date keyword is not set and `other' equals to \"modify\", return the file s
       (plist-get (org-infile-export-plist) :date))))
 
 (require 'find-lisp)
-(defun sydi/get-sorted-org-files-quick (root-dir)
+(defun sydi-get-sorted-org-files-quick (root-dir)
   "get sorted org files quickly, with cache"
   (let ((org-files (remove-if
                     (lambda (ele) (member-if
                                    (lambda (match-reg) (string-match-p match-reg (file-name-nondirectory ele)))
-                                   sydi/atom-exclude-file-list))
+                                   sydi-atom-exclude-file-list))
                     (find-lisp-find-files root-dir "\\.org$"))))
-    (dolist (file sydi/sorted-org-files)
+    (dolist (file sydi-sorted-org-files)
       (delete file org-files))
     org-files))
 
-(defun sydi/get-sorted-org-files (root-dir)
+(defun sydi-get-sorted-org-files (root-dir)
   "return a sorted org files list"
   (let* ((org-files (remove-if
                      (lambda (ele) (member-if
                                     (lambda (match-reg) (string-match-p match-reg (file-name-nondirectory ele)))
-                                    sydi/atom-exclude-file-list))
+                                    sydi-atom-exclude-file-list))
                      (find-lisp-find-files root-dir "\\.org$")))
-         (org-alist (mapcar (lambda (file) (cons file (sydi/get-org-file-date file))) org-files))
+         (org-alist (mapcar (lambda (file) (cons file (sydi-get-org-file-date file))) org-files))
          (sorted-files (mapcar 'car
                                (sort org-alist
                                      (lambda (a b)
-                                       (let* ((adate (sydi/get-org-file-date (car a)))
-                                              (bdate (sydi/get-org-file-date (car b)))
+                                       (let* ((adate (sydi-get-org-file-date (car a)))
+                                              (bdate (sydi-get-org-file-date (car b)))
                                               (A (+ (lsh (car adate) 16) (cadr adate)))
                                               (B (+ (lsh (car bdate) 16) (cadr bdate))))
                                          (>= A B)))))))
     sorted-files))
 
-;; (customize-save-variable 'sydi/sorted-org-files (sydi/get-sorted-org-files "~/sydi.org/org"))
+;; (customize-save-variable 'sydi-sorted-org-files (sydi-get-sorted-org-files "~/sydi.org/org"))
 
-(defun sydi/get-valid-org-files (root-dir)
+(defun sydi-get-valid-org-files (root-dir)
   (let* ((all-org-files (find-lisp-find-files root-dir "\\.org$"))
-         (exclude-regexes sydi/atom-exclude-file-list)
+         (exclude-regexes sydi-atom-exclude-file-list)
          (exclude-file-p (lambda (org-file)
                            (member-if
                             (lambda (regex)
@@ -558,9 +640,9 @@ If #+date keyword is not set and `other' equals to \"modify\", return the file s
                             exclude-regexes))))
     (remove-if exclude-file-p all-org-files)))
 
-(defun sydi/get-all-tags ()
+(defun sydi-get-all-tags ()
   "return: ((tag1 meta1 meta2 ...) (tag2 meta1 ...) ...)"
-  (let ((all-meta (sydi/get-all-meta))
+  (let ((all-meta (sydi-get-all-meta))
         (result))
     (dolist (meta all-meta result)
       (dolist (tag (split-string (or (plist-get meta :keywords) "")) result)
@@ -572,9 +654,9 @@ If #+date keyword is not set and `other' equals to \"modify\", return the file s
                 (message "%s: %s" tag (plist-get meta :title)))
             (add-to-list 'result (list tag meta))))))))
 
-(defun sydi/format-tag-cloud ()
+(defun sydi-format-tag-cloud ()
   (let ((html "<div id=\"tag-cloud\">"))
-    (dolist (item (sydi/get-all-tags) html)
+    (dolist (item (sydi-get-all-tags) html)
       (setq html
             (concat html
                     (format "<a href=\"#\" rel=\"%d\">%s</a>\n"
@@ -582,20 +664,20 @@ If #+date keyword is not set and `other' equals to \"modify\", return the file s
                             (car item) ))))
     (setq html (concat html "</div>"))))
 
-;; (append-to-file (sydi/format-tag-cloud) nil "~/tagcloud.html")
+;; (append-to-file (sydi-format-tag-cloud) nil "~/tagcloud.html")
 
 (replace-regexp-in-string "^\\(.*\\)\\.org$" "/\\1.html" "xxxx.org")
 
-(defun sydi/write-recent-file ()
-  (let* ((meta-list (sydi/get-all-date-sorted-meta))
-         (lastest-meta-list (butlast meta-list (- (length meta-list) sydi/recent-count)))
-         (recent-file (concat sydi/base-directory sydi/recent-file))
+(defun sydi-write-recent-file ()
+  (let* ((meta-list (sydi-get-all-date-sorted-meta))
+         (lastest-meta-list (butlast meta-list (- (length meta-list) sydi-recent-count)))
+         (recent-file (concat sydi-base-directory sydi-recent-file))
          (content))
     (dolist (plist lastest-meta-list content)
       (let ((path (replace-regexp-in-string
                    "^\\(.*\\).org$" "/\\1.html"
                    (file-relative-name
-                    (plist-get plist :file) sydi/base-directory)))
+                    (plist-get plist :file) sydi-base-directory)))
             (title (plist-get plist :title)))
         (setq content
               (concat
@@ -605,7 +687,7 @@ If #+date keyword is not set and `other' equals to \"modify\", return the file s
         (delete-file recent-file))
     (append-to-file content nil recent-file)))
 
-(defun sydi/get-all-date-sorted-meta ()
+(defun sydi-get-all-date-sorted-meta ()
   "return: (meta1 meta2 ...)
 All meta are sorted by it's date property."
   (defun comp-date (adate bdate)
@@ -620,18 +702,18 @@ All meta are sorted by it's date property."
     (let ((adate (cons-date (plist-get aplist :date)))
           (bdate (cons-date (plist-get bplist :date))))
       (comp-date adate bdate)))
-  (sydi/get-all-sorted-meta 'comp-org-date))
+  (sydi-get-all-sorted-meta 'comp-org-date))
 
-(defun sydi/get-all-sorted-meta (pred)
+(defun sydi-get-all-sorted-meta (pred)
   "use `pred' sort meta-list"
-  (sort (sydi/get-all-meta) pred))
+  (sort (sydi-get-all-meta) pred))
 
-(defun sydi/get-all-meta ()
+(defun sydi-get-all-meta ()
   "Get all org files' meta by scan their file directly."
-  (mapcar 'sydi/get-org-meta (sydi/get-valid-org-files sydi/base-directory)))
+  (mapcar 'sydi-get-org-meta (sydi-get-valid-org-files sydi-base-directory)))
 
-(defun sydi/get-org-meta (org-file)
-  (defun sydi/interpret (plist prop)
+(defun sydi-get-org-meta (org-file)
+  (defun sydi-interpret (plist prop)
     (plist-put plist prop
                (let ((v (plist-get plist prop)))
                  (cond ((consp v)
@@ -651,11 +733,11 @@ All meta are sorted by it's date property."
         (dotimes (idx (length plist))
           (if (= 0 (% idx 2))
               (let ((prop (nth idx plist)))
-                (sydi/interpret plist prop))))
+                (sydi-interpret plist prop))))
         (plist-put plist :file org-file)))))
 
 ;;; for sitemap.xml
-(defun sydi/all-urls (root-dir prefix)
+(defun sydi-all-urls (root-dir prefix)
   (let* ((all-files (find-lisp-find-files root-dir ""))
          (all-org-files (remove-if-not
                          (lambda (file) (string-match ".org$" file)) all-files)))
@@ -673,7 +755,7 @@ All meta are sorted by it's date property."
                              file))
                   all-org-files))))
 
-(defun sydi/generate-sitemap-ex (sitemap-filename root-dir prefix)
+(defun sydi-generate-sitemap-ex (sitemap-filename root-dir prefix)
   (with-temp-buffer
     (kill-region (point-min) (point-max))
     (insert
@@ -682,14 +764,15 @@ All meta are sorted by it's date property."
 <urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">
 "
       (mapconcat (lambda (url) (format "<url><loc>%s</loc><priority>0.5000</priority></url>" url))
-                 (sydi/all-urls root-dir prefix) "\n")
+                 (sydi-all-urls root-dir prefix) "\n")
       "</urlset>"))
     (write-file (concat root-dir sitemap-filename))
     (kill-buffer)))
 
-(defun sydi/generate-sitemap ()
+(defun sydi-generate-sitemap ()
   (interactive)
-  (sydi/generate-sitemap-ex "sitemap.xml" "/home/ryan/sydi.org/org/" "http://sydi.org/"))
+  (sydi-generate-sitemap-ex "sitemap.xml" "/home/ryan/sydi.org/org/" "http://sydi.org/"))
 
 (provide 'sydi-site)
+
 ;;; sydi-site.el ends here
