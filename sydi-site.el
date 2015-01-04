@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 598
+;;     Update #: 628
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -100,9 +100,9 @@
   ga('send', 'pageview');
 
 </script>"
-  "Google tracker script, change it's id to your google tracker
-id that you can tracker your visitors behaviors in Google
-Analytics."
+  "Google tracker script.
+Change it's id to your Google tracker id that you can tracker
+your visitors behaviors in Google Analytics."
   :group 'sydi-site
   :type 'string)
 
@@ -114,8 +114,8 @@ each of regexp, it'll not export it if any regexp matches."
   :type '(set regexp))
 
 (defcustom sydi-atom-max-export-files-num 10
-  "Max files to be export to atom file at most.  Don't set too big,
-10 maybe a appropriate value, 20 is the top."
+  "Max files to be export to atom file at most.
+Don't set too big, 10 maybe a appropriate value, 20 is the top."
   :group 'sydi-site
   :type 'integer)
 
@@ -196,11 +196,9 @@ each of regexp, it'll not export it if any regexp matches."
 
 ;;;###autoload
 (defun sydi-sync-server ()
-  (sydi-write-recent-file)
-  (message "sync file to server")
-  ;; (async-shell-command "update_sydi_org.sh")
-  (message "sync file to server complete")
-  )
+  "This function run after all org files have been translated to HTML format.
+It'll write a update the recent file by walking through the project."
+  (sydi-write-recent-file))
 
 (setq org-export-filter-final-output-functions '(sydi-final-export))
 
