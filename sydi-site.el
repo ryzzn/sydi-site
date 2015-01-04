@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 628
+;;     Update #: 631
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -174,6 +174,22 @@ Don't set too big, 10 maybe a appropriate value, 20 is the top."
 (add-to-list 'org-export-options-alist '(:homepage nil "homepage" nil sydi-homepage-p))
 (add-to-list 'org-export-options-alist '(:single nil "single" t sydi-single-p))
 (add-to-list 'org-export-options-alist '(:js-style nil nil nil))
+
+;; support other languages for babel
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((R . t)
+   (emacs-lisp . t)
+   (matlab . t)
+   (C . t)
+   (perl . t)
+   (sh . t)
+   (ditaa . t)
+   (python . t)
+   (haskell . t)
+   (dot . t)
+   (js . t)))
+
 
 (eval-after-load 'ox-html
   '(progn
