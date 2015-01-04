@@ -35,7 +35,7 @@ DESTNATE=${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_FOLDER};
 
 function do_tidy {
     if [ "$USE_TIDY" ]; then
-        find $PUBLISH_HTTP_DIR -type f \( -name '*.html' -or -name '*.xml' \) -exec tidy -m {} \;
+        find $PUBLISH_HTTP_DIR -type f \( -name '*.html' -or -name '*.xml' \) -exec tidy -m {} \; 2>/dev/null
     fi
 }
 
