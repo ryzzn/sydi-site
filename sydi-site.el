@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 631
+;;     Update #: 730
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -55,22 +55,27 @@
   :group 'Applications
   :prefix "sydi-")
 
-(defcustom sydi-base-directory "~/sydi.org/org/"
+(defcustom sydi-base-directory "~/sydi.org/origin/"
   "Base org files directory."
   :group 'sydi-site
   :type 'directory)
 
-(defcustom sydi-publish-directory "~/sydi.org/html/"
+(defcustom sydi-article-directory "posts"
+  "Articles directory relating to `sydi-base-directory'."
+  :group 'sydi-site
+  :type 'string)
+
+(defcustom sydi-publish-directory "~/sydi.org/publish/"
   "Directory where to export org file to."
   :group 'sydi-site
   :type 'directory)
 
-(defcustom sydi-base-code-directory "~/sydi.org/html/code/"
+(defcustom sydi-base-code-directory "~/sydi.org/publish/code/"
   "Directory where to put code files."
   :group 'sydi-site
   :type 'directory)
 
-(defcustom sydi-base-images-directory "~/sydi.org/html/assets/images/"
+(defcustom sydi-base-images-directory "~/sydi.org/publish/assets/images/"
   "Directory where to put images."
   :group 'sydi-site
   :type 'directory)
@@ -340,6 +345,15 @@ It'll write a update the recent file by walking through the project."
                       ;; sydi-site-name
                       )))))
 
+(defun sydi-directory-file-compare (afile bfile)
+  "Compare two file of `AFILE' and `BFILE' by their directory path."
+  (let ((adir (file-name-directory afile))
+        (bdir (file-name-directory bfile)))
+    (cond
+     ((string-prefix-p adir bdir) t)
+     ((string-prefix-p bdir adir) nil)
+     (t (string< afile bfile)))))
+
 (defun sydi-publish-org-sitemap (project &optional sitemap-filename)
   "Create a sitemap of pages in set defined by PROJECT.
 Optionally set the filename of the sitemap with SITEMAP-FILENAME.
@@ -347,73 +361,53 @@ Default for SITEMAP-FILENAME is 'sitemap.org'."
   (let* ((project-plist (cdr project))
          (dir (file-name-as-directory
                (plist-get project-plist :base-directory)))
-         (localdir (file-name-directory dir))
+         (localdir (file-name-as-directory (concat dir "/" sydi-article-directory)))
+         (base-article-dir localdir)
+         (oldlocal localdir)
          (indent-str "")
          (exclude-regexp (plist-get project-plist :exclude))
-         (files (nreverse (org-publish-get-base-files project exclude-regexp)))
+         (files (sort (nreverse (sydi-get-sorted-org-files localdir))
+                      'sydi-directory-file-compare))
          (sitemap-filename (concat dir (or sitemap-filename "sitemap.org")))
          (sitemap-title (or (plist-get project-plist :sitemap-title)
                             (concat "Sitemap for project " (car project))))
-         (sitemap-sans-extension (plist-get project-plist :sitemap-sans-extension))
          (visiting (find-buffer-visiting sitemap-filename))
-         (ifn (file-name-nondirectory sitemap-filename)) file sitemap-buffer)
+         (ifn (file-name-nondirectory sitemap-filename))
+         (file)
+         (sitemap-buffer))
     (with-current-buffer (setq sitemap-buffer
                                (or visiting (find-file sitemap-filename)))
-      (message "Generating tree-style sitemap for %s" sitemap-title)
+      (message "Generating flat-style sitemap for %s" sitemap-title)
       (erase-buffer)
       (insert (concat "#+TITLE: " sitemap-title "\n\n"))
       (insert "#+BEGIN_HTML\n<div class=\"panes\">\n#+END_HTML\n")
-      (while (setq file (pop files))
+      (insert "* Root \n")
+      (dolist (file files)
         (let ((fn (file-name-nondirectory file))
               (link (file-relative-name file dir))
               (date (format-time-string "%Y-%m-%d" (sydi-get-org-file-date file)))
-              (oldlocal localdir))
-          (when sitemap-sans-extension
-            (setq link (file-name-sans-extension link)))
-          ;; sitemap shouldn't list itself
-          (unless (equal (file-truename sitemap-filename)
-                         (file-truename file))
-            (setq localdir (concat (file-name-as-directory dir)
-                                   (file-name-directory link)))
-            (unless (string= localdir oldlocal)
-              (if (string= localdir dir)
-                  (insert (concat "\n* Top\n"))
-                (let* ((subdirs
-                        (split-string
-                         (directory-file-name
-                          (file-name-directory
-                           (file-relative-name localdir dir))) "/"))
-                       (subdir "")
-                       (old-subdirs (split-string
-                                     (file-relative-name oldlocal dir) "/"))
-                       (level-between (- (length subdirs)
-                                         (length (split-string dir))))
-                       (indent-str (make-string (* level-between 2) ?\ )))
-                  ;; (setq indent-str (make-string 2 ?\ ))
-                  (while (string= (car old-subdirs) (car subdirs))
-                    (pop old-subdirs)
-                    (pop subdirs))
-                  (dolist (d subdirs)
-                    (setq subdir (concat subdir d "/"))
-                    ;; (insert (concat indent-str " + " d "\n"))
-                    (insert (concat "\n* " d "\n")))))
-              )
-            ;; This is common to 'flat and 'tree
-            (let ((entry
-                   (org-publish-format-file-entry "%t" file project-plist))
-                  (regexp "\\(.*\\)\\[\\([^][]+\\)\\]\\(.*\\)"))
-              (cond ((string-match-p regexp entry)
-                     (string-match regexp entry)
-                     (insert (concat indent-str " + " (match-string 1 entry)
-                                     "[[file:" link "]["
-                                     (match-string 2 entry)
-                                     "]]@@html:<span class=\"page-item-date\">@@"
-                                     date " @@html:</span>@@" (match-string 3 entry) "\n")))
-                    (t
-                     (insert (concat indent-str " + [[file:" link "]["
-                                     entry
-                                     "]]@@html:<span class=\"page-item-date\">@@"
-                                     date " @@html:</span>@@\n"))))))))
+              (localdir (file-name-directory file)))
+          (unless (string= "./" (file-relative-name oldlocal localdir))
+            (let ((tag-name (file-relative-name localdir base-article-dir)))
+              (insert (concat "* " tag-name "\n"))))
+          (setq oldlocal localdir)
+
+          ;; This is common to 'flat and 'tree
+          (let ((entry
+                 (org-publish-format-file-entry "%t" file project-plist))
+                (regexp "\\(.*\\)\\[\\([^][]+\\)\\]\\(.*\\)"))
+            (cond ((string-match-p regexp entry)
+                   (string-match regexp entry)
+                   (insert (concat indent-str " + " (match-string 1 entry)
+                                   "[[file:" link "]["
+                                   (match-string 2 entry)
+                                   "]]@@html:<span class=\"page-item-date\">@@"
+                                   date " @@html:</span>@@" (match-string 3 entry) "\n")))
+                  (t
+                   (insert (concat indent-str " + [[file:" link "]["
+                                   entry
+                                   "]]@@html:<span class=\"page-item-date\">@@"
+                                   date " @@html:</span>@@\n")))))))
       (insert "\n#+BEGIN_HTML\n</div>\n#+END_HTML\n")
       (save-buffer))
     (or visiting (kill-buffer sitemap-buffer))))
@@ -625,11 +619,7 @@ If #+date keyword is not set and `other' equals to \"modify\", return the file s
 
 (defun sydi-get-sorted-org-files (root-dir)
   "return a sorted org files list"
-  (let* ((org-files (remove-if
-                     (lambda (ele) (member-if
-                                    (lambda (match-reg) (string-match-p match-reg (file-name-nondirectory ele)))
-                                    sydi-atom-exclude-file-list))
-                     (find-lisp-find-files root-dir "\\.org$")))
+  (let* ((org-files (sydi-get-valid-org-files root-dir))
          (org-alist (mapcar (lambda (file) (cons file (sydi-get-org-file-date file))) org-files))
          (sorted-files (mapcar 'car
                                (sort org-alist
@@ -751,22 +741,14 @@ All meta are sorted by it's date property."
 
 ;;; for sitemap.xml
 (defun sydi-all-urls (root-dir prefix)
-  (let* ((all-files (find-lisp-find-files root-dir ""))
-         (all-org-files (remove-if-not
-                         (lambda (file) (string-match ".org$" file)) all-files)))
-    (concatenate 'list
-                 (mapcar
-                  (lambda (file) (replace-regexp-in-string
-                             (concat root-dir "\\(.*\\).org")
-                             (concat prefix "\\1.html")
-                             file))
-                  all-org-files)
-                 (mapcar
-                  (lambda (file) (replace-regexp-in-string
-                             (concat root-dir "\\(.*\\)")
-                             (concat prefix "\\1.html")
-                             file))
-                  all-org-files))))
+  "Return all org files under `ROOT-DIR' in which replace prefix as `PREFIX' recursively."
+  (let ((all-org-files (sydi-get-valid-org-files root-dir)))
+    (mapcar
+     (lambda (file)
+       (concat prefix
+               (file-name-sans-extension (file-relative-name file root-dir))
+               ".html"))
+     all-org-files)))
 
 (defun sydi-generate-sitemap-ex (sitemap-filename root-dir prefix)
   (with-temp-buffer
