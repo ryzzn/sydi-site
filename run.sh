@@ -22,20 +22,20 @@
 
 # Code:
 
-# where html files put
-BASE_DIR=~/sydi.org
-ORIGIN_HTTP_DIR=$BASE_DIR/origin
-PUBLISH_HTTP_DIR=$BASE_DIR/publish
 USE_TIDY="TRUE"
+CUSTOM_FILE="custom.el"
 
-REMOTE_USER=ryan;
-REMOTE_HOST=sydi.org;
-REMOTE_FOLDER=/srv/http/www/;
-DESTNATE=${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_FOLDER};
+function elisp_func {
+    emacs -Q --batch -L htmlize -l sydi-site.el -l custom.el -f "$1";
+}
+
+function elisp_code {
+    emacs -Q --batch -L htmlize -l sydi-site.el -l custom.el --eval "$1";
+}
 
 function do_tidy {
     if [ "$USE_TIDY" ]; then
-        find $PUBLISH_HTTP_DIR -type f \( -name '*.html' -or -name '*.xml' \) -exec tidy -m {} \; 2>/dev/null
+        find $PUBLISH_DIR -type f \( -name '*.html' -or -name '*.xml' \) -exec tidy -m {} \; 2>/dev/null
     fi
 }
 
@@ -43,45 +43,101 @@ function usage {
     echo "Usage: ./run.sh [init|test]"
 }
 
-function init {
-    mkdir -p $ORIGIN_HTTP_DIR/{posts,dynamic,components,assets}
-
-    echo '(setq org-publish-timestamp-directory "'$BASE_DIR'/.org-timestamps/")' >>custom.el
-    echo '(setq sydi-base-directory "'$ORIGIN_HTTP_DIR'/")' >>custom.el
-    echo '(setq sydi-publish-directory "'$PUBLISH_HTTP_DIR'/")' >>custom.el
-    echo '(setq sydi-site-url "http://YOUR_SITE_URL")' >>custom.el
-    echo '(setq sydi-site-name "YOUR_SITE_NAME")' >>custom.el
-
-    echo "Write your javascript in file: $ORIGIN_HTTP_DIR/assets/javascripts/site.js"
-    echo "Write your css in file: $ORIGIN_HTTP_DIR/assets/css/style.css"
-    echo "Write your articles in under: $ORIGIN_HTTP_DIR/posts/"
+function check_init {
+    if !(test -f $CUSTOM_FILE)
+    then
+        init; exit
+    fi
 }
 
-case "$1" in
-    init)
-        init
-        ;;
-    test)
-        (
-            cd $PUBLISH_HTTP_DIR &&
-            (sleep 1 && xdg-open http://localhost:8000 &) &&
-            python2 -mSimpleHTTPServer 8000
-        )
-        ;;
-    tidy)
-        do_tidy
-        ;;
-    rsync)
-        rsync -avz --progress --delete ${PUBLISH_HTTP_DIR}/ ${DESTNATE}
-        ;;
-    "")
-        emacs -Q --batch -L htmlize -l sydi-site.el -l custom.el -f sydi-publish
-        do_tidy
-        ;;
-    *)
-        usage;
-        ;;
-esac
+function get_base_dir {
+    # upper directory
+    BASE_DIR_DEFAULT=$(dirname $(pwd))
+
+    while [ true ]
+    do
+        echo -n "BASE_DIR ($BASE_DIR_DEFAULT): "
+        read BASE_DIR
+        if test -d $BASE_DIR -a -w $BASE_DIR
+        then
+            break
+        fi
+    done
+
+    if [ "$BASE_DIR" = "" ]
+    then
+        echo "using default directory BASE_DIR: $BASE_DIR_DEFAULT"
+        BASE_DIR=$BASE_DIR_DEFAULT
+    fi
+}
+
+function init {
+    get_base_dir
+
+    ORIGIN_DIR=$BASE_DIR/origin
+    PUBLISH_DIR=$BASE_DIR/publish
+
+    mkdir -p $ORIGIN_DIR/{posts,dynamic,components,assets}
+
+    echo '(setq org-publish-timestamp-directory "'$BASE_DIR'/.org-timestamps/")' >>$CUSTOM_FILE
+    echo '(setq sydi-base-directory "'$ORIGIN_DIR'/")' >>$CUSTOM_FILE
+    echo '(setq sydi-publish-directory "'$PUBLISH_DIR'/")' >>$CUSTOM_FILE
+    echo '(setq sydi-site-url "http://YOUR_SITE_URL")' >>$CUSTOM_FILE
+    echo '(setq sydi-site-name "YOUR_SITE_NAME")' >>$CUSTOM_FILE
+    echo '(setq sydi-remotes '\''((:user "user" :host "host" :directory "/var/www")))' >>$CUSTOM_FILE
+
+    echo "Write your javascript in file: $ORIGIN_DIR/assets/javascripts/site.js"
+    echo "Write your css in file: $ORIGIN_DIR/assets/css/style.css"
+    echo ""
+    echo "
+Congratulations, sydi-site init success!
+
+  1. You can check your custom file $CUSTOM_FILE to make it your own.
+
+  2. Then create your org articles under: $ORIGIN_DIR/posts/
+
+  3. Come here and run ./run.sh to generate html files.
+
+  4. Run ./run.sh test to see if your site create right.
+
+  5. Run ./run.sh to publish your html files to remote machine if needed.
+"
+}
+
+function main {
+    check_init
+
+    # where html files put
+    PUBLISH_DIR=$(elisp_code '(message sydi-publish-directory)' 2>&1)
+
+    case "$1" in
+        init)
+            init
+            ;;
+        test)
+            (
+                cd $PUBLISH_DIR &&
+                    (sleep 1 && xdg-open http://localhost:8000 &) &&
+                    python2 -mSimpleHTTPServer 8000
+            )
+            ;;
+        tidy)
+            do_tidy
+            ;;
+        rsync)
+            elisp_func sydi-remote-sync
+            ;;
+        "")
+            elisp_func sydi-publish
+            do_tidy
+            ;;
+        *)
+            usage
+            ;;
+    esac
+}
+
+main
 
 #
 # run.sh ends here

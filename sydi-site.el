@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 730
+;;     Update #: 751
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -168,6 +168,14 @@ Don't set too big, 10 maybe a appropriate value, 20 is the top."
   "Where the footer component file path is."
   :group 'sydi-site
   :type 'string)
+
+(defcustom sydi-remotes '((:user "ryan" :host "sydi.org" :directory "/var/www"))
+  "A list of directories where your is located on.
+
+Example:
+((:user \"ryan\" :host \"sydi.org\" :directory \"/var/www/\"'))"
+  :group 'sydi-site
+  :type 'list)
 
 (require 'ox)
 
@@ -767,6 +775,24 @@ All meta are sorted by it's date property."
 (defun sydi-generate-sitemap ()
   (interactive)
   (sydi-generate-sitemap-ex "dynamic/sitemap.xml" sydi-base-directory "http://sydi.org/"))
+
+(defun sydi-get-remote-directory ()
+  "Get remote directory according to configuration of
+`sydi-remotes'."
+  (let ((remote (car sydi-remotes)))
+    (format "%s@%s:%s" (plist-get remote :user)
+            (plist-get remote :host)
+            (plist-get remote :directory))))
+
+(defun sydi-remote-sync ()
+  "Get remote sync command."
+  (let* ((local-directory sydi-publish-directory)
+        (remote-directory (sydi-get-remote-directory))
+        (command (format
+                  "rsync -avz --delete --progress %s %s"
+                  local-directory
+                  remote-directory)))
+    (shell-command command)))
 
 (provide 'sydi-site)
 
