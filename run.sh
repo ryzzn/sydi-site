@@ -110,7 +110,7 @@ function main {
     # where html files put
     PUBLISH_DIR=$(elisp_code '(message sydi-publish-directory)' 2>&1)
 
-    case "$1" in
+    case "$ACTION" in
         init)
             init
             ;;
@@ -137,6 +137,7 @@ function main {
     esac
 }
 
+ACTION=$1
 main
 
 #
