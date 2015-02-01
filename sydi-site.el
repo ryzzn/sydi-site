@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 751
+;;     Update #: 782
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -776,23 +776,24 @@ All meta are sorted by it's date property."
   (interactive)
   (sydi-generate-sitemap-ex "dynamic/sitemap.xml" sydi-base-directory "http://sydi.org/"))
 
-(defun sydi-get-remote-directory ()
+(defun sydi-get-remote-directory (remote)
   "Get remote directory according to configuration of
 `sydi-remotes'."
-  (let ((remote (car sydi-remotes)))
-    (format "%s@%s:%s" (plist-get remote :user)
-            (plist-get remote :host)
-            (plist-get remote :directory))))
+  (format "%s@%s:%s" (plist-get remote :user)
+          (plist-get remote :host)
+          (plist-get remote :directory)))
 
 (defun sydi-remote-sync ()
   "Get remote sync command."
-  (let* ((local-directory sydi-publish-directory)
-        (remote-directory (sydi-get-remote-directory))
-        (command (format
-                  "rsync -avz --delete --progress %s %s"
-                  local-directory
-                  remote-directory)))
-    (shell-command command)))
+  (dolist (remote sydi-remotes)
+    (let* ((local-directory sydi-publish-directory)
+           (remote-directory (sydi-get-remote-directory remote))
+           (command (format
+                     "rsync -avz --delete --progress %s %s"
+                     local-directory
+                     remote-directory)))
+      (message command)
+      (call-process-shell-command command))))
 
 (provide 'sydi-site)
 
