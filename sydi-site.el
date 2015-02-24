@@ -9,7 +9,7 @@
 ;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
-;;     Update #: 782
+;;     Update #: 783
 ;; URL: https://github.com/ryzzn/sydi-site
 ;; Doc URL: https://github.com/ryzzn/sydi-site
 ;; Keywords: sydi, Emacs, org mode, website
@@ -214,7 +214,7 @@ Example:
      (setq org-html-head-include-default-style nil) ; 不加载默认css
      (setq org-html-link-home sydi-site-url)
      (setq org-export-with-section-numbers nil)
-     (setq org-html-link-use-abs-url t)
+     ; (setq org-html-link-use-abs-url t)
      (setq org-html-preamble (lambda (plist) "<g:plusone></g:plusone>"))
      (setq org-html-footnotes-section "<div id=\"footnotes\">
 <h2 class=\"footnotes\">%s: </h2>
